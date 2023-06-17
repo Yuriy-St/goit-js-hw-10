@@ -10,18 +10,24 @@ import { Report } from 'notiflix';
 const catAPI = new CatAPI();
 
 const loaderEl = document.querySelector('.loader-backdrop');
+const breedSelectEl = document.querySelector('.breed-select');
 const catInfoEl = document.querySelector('.cat-info');
+
+touggleIsHidden(breedSelectEl);
+touggleIsHidden(catInfoEl);
 
 const select = new SlimSelect({
   select: '.breed-select',
+  settings: {
+    placeholderText: 'Select a cat breed',
+    hideSelected: true,
+  },
   events: {
     afterChange: fetchBreed,
   },
 });
 
-// loaderEl.classList.add('is-hidden');
-touggleCatInfo();
-
+// Fill select with fetched breed values
 catAPI
   .fetchBreeds()
   .then(fillSelectWithBreeds)
@@ -29,15 +35,16 @@ catAPI
   .finally(() => {
     touggleLoader();
   });
-// catAPI.fetchBreedInfo('asho').then(console.log).catch(console.error);
 
+// Functions to process querries
 function touggleLoader() {
   loaderEl.classList.toggle('is-hidden');
 }
 
-function touggleCatInfo(isError = false) {
-  const classList = catInfoEl.classList;
+function touggleIsHidden(el, isError = false) {
+  const classList = el.classList;
   const isHidden = 'is-hidden';
+
   if (isError) {
     classList.add(isHidden);
     return;
@@ -53,15 +60,24 @@ function fillSelectWithBreeds(breeds) {
   const data = breeds.map(breed => {
     return { value: breed.id, text: breed.name };
   });
+  data.unshift({ value: 'pholder', text: '', placeholder: true });
   select.setData(data);
-  touggleCatInfo();
+  touggleIsHidden(breedSelectEl);
 }
 
 function fetchBreed(selections) {
-  touggleCatInfo();
+  const { value } = selections[0];
+
+  if (value === 'pholder') {
+    return Promise.resolve(true);
+  }
+
+  syncBreedContainerVisibility();
+  touggleIsHidden(breedSelectEl);
+  touggleIsHidden(catInfoEl);
   touggleLoader();
   catAPI
-    .fetchByBreed(selections[0].value)
+    .fetchByBreed(value)
     .then(renderBreed)
     .catch(processError)
     .finally(() => {
@@ -72,6 +88,7 @@ function fetchBreed(selections) {
 function renderBreed(breed) {
   const { url, name, description, temperament } = breed;
   const catInfoEl = document.querySelector('.cat-info');
+
   catInfoEl.innerHTML = `
   <div class="img-breed">
     <img src="${url}" alt="Representative of the ${name} breed" />
@@ -82,11 +99,20 @@ function renderBreed(breed) {
     <p class="temperament"><span>Temperament: </span>${temperament}</p>
   </div>
   `;
-  touggleCatInfo();
+
+  touggleIsHidden(breedSelectEl);
+  touggleIsHidden(catInfoEl);
+}
+
+function syncBreedContainerVisibility() {
+  if (!breedSelectEl.classList.contains('is-hidden') & catInfoEl.classList.contains('is-hidden')) {
+    catInfoEl.classList.remove('is-hidden');
+  }
 }
 
 function processError(err) {
-  touggleCatInfo(true);
-  Report.failure('Error', `${err.message || 'Something went wrong 🙄 Try reloading the page!'}`, 'Okay');
+  touggleIsHidden(breedSelectEl, true);
+  touggleIsHidden(catInfoEl, true);
+  Report.failure('Error', 'Something went wrong 🙄 Try reloading the page!', 'Okay');
   console.error(err);
 }
