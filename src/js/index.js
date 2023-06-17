@@ -3,6 +3,7 @@
 import CatAPI from './cat-api';
 import SlimSelect from 'slim-select';
 import 'slim-select/dist/slimselect.css';
+import '../css/index.css';
 
 import { Report } from 'notiflix';
 
@@ -35,11 +36,17 @@ function touggleLoader() {
 }
 
 function touggleCatInfo(isError = false) {
+  const classList = catInfoEl.classList;
+  const isHidden = 'is-hidden';
   if (isError) {
-    catInfoEl.classList.add('is-hidden');
+    classList.add(isHidden);
+    return;
+  } else if (classList.contains(isHidden)) {
+    classList.remove(isHidden);
     return;
   }
-  catInfoEl.classList.toggle('is-hidden');
+
+  classList.add(isHidden);
 }
 
 function fillSelectWithBreeds(breeds) {
