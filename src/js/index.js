@@ -9,12 +9,8 @@ import { Report } from 'notiflix';
 
 const catAPI = new CatAPI();
 
-const loaderEl = document.querySelector('.loader-backdrop');
-const breedSelectEl = document.querySelector('.breed-select');
-const catInfoEl = document.querySelector('.cat-info');
-
-touggleIsHidden(breedSelectEl);
-touggleIsHidden(catInfoEl);
+const breedSelectRef = document.querySelector('.breed-select');
+const catInfoRef = document.querySelector('.cat-info');
 
 const select = new SlimSelect({
   select: '.breed-select',
@@ -33,27 +29,26 @@ catAPI
   .then(fillSelectWithBreeds)
   .catch(processError)
   .finally(() => {
-    touggleLoader();
+    switchLoader();
   });
 
 // Functions to process querries
-function touggleLoader() {
-  loaderEl.classList.toggle('is-hidden');
+function switchLoader(value) {
+  const loaderRef = document.querySelector('.loader-backdrop');
+  touggleElement(loaderRef, value);
 }
 
-function touggleIsHidden(el, isError = false) {
-  const classList = el.classList;
-  const isHidden = 'is-hidden';
-
-  if (isError) {
-    classList.add(isHidden);
-    return;
-  } else if (classList.contains(isHidden)) {
-    classList.remove(isHidden);
-    return;
+function touggleElement(el, value) {
+  switch (value) {
+    case 'on':
+      el.classList.remove('is-hidden');
+      break;
+    case 'off':
+      el.classList.add('is-hidden');
+      break;
+    default:
+      el.classList.toggle('is-hidden');
   }
-
-  classList.add(isHidden);
 }
 
 function fillSelectWithBreeds(breeds) {
@@ -62,7 +57,7 @@ function fillSelectWithBreeds(breeds) {
   });
   data.unshift({ value: 'pholder', text: '', placeholder: true });
   select.setData(data);
-  touggleIsHidden(breedSelectEl);
+  touggleElement(document.getElementById('breed-container'), 'on');
 }
 
 function fetchBreed(selections) {
@@ -72,16 +67,16 @@ function fetchBreed(selections) {
     return Promise.resolve(true);
   }
 
-  syncBreedContainerVisibility();
-  touggleIsHidden(breedSelectEl);
-  touggleIsHidden(catInfoEl);
-  touggleLoader();
+  touggleElement(breedSelectRef, 'off');
+  touggleElement(catInfoRef, 'off');
+  switchLoader('on');
+
   catAPI
     .fetchByBreed(value)
     .then(renderBreed)
     .catch(processError)
     .finally(() => {
-      touggleLoader();
+      switchLoader('off');
     });
 }
 
@@ -100,19 +95,15 @@ function renderBreed(breed) {
   </div>
   `;
 
-  touggleIsHidden(breedSelectEl);
-  touggleIsHidden(catInfoEl);
-}
-
-function syncBreedContainerVisibility() {
-  if (!breedSelectEl.classList.contains('is-hidden') & catInfoEl.classList.contains('is-hidden')) {
-    catInfoEl.classList.remove('is-hidden');
-  }
+  touggleElement(breedSelectRef, 'on');
+  touggleElement(catInfoEl, 'on');
 }
 
 function processError(err) {
-  touggleIsHidden(breedSelectEl, true);
-  touggleIsHidden(catInfoEl, true);
+  if (!document.getElementById('breed-container').classList.contains('is-hidden')) {
+    touggleElement(breedSelectRef, 'on');
+  }
+  touggleElement(catInfoRef, 'off');
   Report.failure('Error', 'Something went wrong 🙄 Try reloading the page!', 'Okay');
   console.error(err);
 }
